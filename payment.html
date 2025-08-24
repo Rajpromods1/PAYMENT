@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Payment</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<style>
+:root{
+  --bg-a:#e6edff;
+  --bg-b:#f4f7ff;
+  --accent-1: #5966ff;
+  --accent-2: #8b5cf6;
+  --muted:#6b7280;
+}
+html,body{
+  height:100%;margin:0;
+  font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(139,92,246,0.12), transparent 8%),
+    radial-gradient(900px 400px at 90% 90%, rgba(125,211,252,0.12), transparent 8%),
+    linear-gradient(180deg,#f3f6ff 0%, #eef4ff 100%);
+  -webkit-font-smoothing:antialiased;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+.wrap{
+  width: 90%;
+  max-width:360px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,255,0.85));
+  border-radius: 28px;
+  padding: 30px 22px;
+  box-shadow: 0 18px 50px rgba(47, 47, 63, 0.12), inset 0 1px 0 rgba(255,255,255,0.6);
+  text-align:center;
+  position:relative;
+  overflow:visible;
+  transition: transform 0.6s cubic-bezier(.2,.9,.3,1), box-shadow 0.6s ease;
+}
+.glow {
+  position:absolute;left:50%;top:6px;transform:translateX(-50%);
+  width:240px;height:240px;border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, rgba(89,102,255,0.18), rgba(139,92,246,0.1) 30%, transparent 45%);
+  filter: blur(36px);
+  z-index:0;
+  pointer-events:none;
+}
+h1{font-size:22px;margin:8px 0 6px;color:#0f172a;z-index:2;position:relative;font-weight:700}
+p.lead{margin:0 0 16px;color:var(--muted);font-size:14px;z-index:2;position:relative;line-height:1.45;}
+.svg-wrap{width:160px;height:160px;margin:6px auto 6px;position:relative;z-index:2;}
+@keyframes floatShield {0%,100%{ transform: translateY(0) scale(1); }50%{ transform: translateY(-6px) scale(1.02); }}
+.shield { animation: floatShield 5s cubic-bezier(.45,.05,.55,.95) infinite; transform-origin:center; }
+.check { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw 1.2s ease forwards 0.45s; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.shield-glow { filter: drop-shadow(0 14px 30px rgba(99,102,255,0.18)); }
+.badge {display:inline-block;padding:8px 12px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:white;font-weight:600;font-size:13px;margin-top:12px;box-shadow:0 8px 30px rgba(99,102,255,0.12);}
+.disclaimer {margin-top:14px;padding:12px 14px;border-radius:12px;background:linear-gradient(180deg, rgba(10,10,30,0.02), rgba(10,10,30,0.01));border:1px solid rgba(15,23,42,0.03);color:var(--muted);font-size:13px;line-height:1.4;}
+.cta {margin-top:16px;display:flex;gap:10px;align-items:center;justify-content:center;}
+.btn {background:linear-gradient(90deg,var(--accent-1),var(--accent-2));border:none;color:white;padding:12px 18px;border-radius:14px;font-weight:700;cursor:pointer;box-shadow:0 12px 30px rgba(99,102,255,0.18);font-size:16px;transition:transform .3s, box-shadow .3s;}
+.btn.secondary {background:transparent;border:1px solid rgba(15,23,42,0.06);color:#0f172a;padding:11px 14px;font-weight:600;box-shadow:none;}
+.btn:hover{ transform:translateY(-4px); box-shadow:0 18px 40px rgba(99,102,255,0.22); }
+input[type="number"]{
+  width:90%;
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+  text-align:center;
+  background:rgba(255,255,255,0.15);
+  color:#0f172a;
+  outline:none;
+  box-shadow:0 8px 20px rgba(89,102,255,0.12);
+  transition:0.3s;
+  margin-top:12px;
+}
+input[type="number"]:focus{
+  background:rgba(255,255,255,0.25);
+  box-shadow:0 12px 30px rgba(89,102,255,0.25);
+}
+@media (max-width:420px){.wrap{width:95%;padding:18px;border-radius:18px;}.svg-wrap{width:150px;height:150px;}h1{ font-size:20px; }p.lead{ font-size:13px; }.badge{ font-size:12px; padding:6px 10px; }.disclaimer{ font-size:12px; padding:10px 12px; }.btn{ padding:10px 14px; font-size:14px; }}
+#paymentSection {display:none;}
+#qrcode {margin: 15px auto; background: #fff; padding: 10px; border-radius: 12px; display: inline-block;}
+.copy-btn {margin-top:8px;font-size:14px;background:linear-gradient(90deg,#7d2ae8,#9d4edd);color:white;font-weight:700;padding:10px 18px;border-radius:14px;cursor:pointer;box-shadow:0 12px 30px rgba(157,78,221,0.25);transition:0.3s;}
+.copy-btn:hover{transform:scale(1.05);box-shadow:0 18px 40px rgba(157,78,221,0.35);}
+</style>
+</head>
+<body>
+
+<!-- Welcome Section -->
+<div id="welcomeSection" class="wrap">
+  <div class="glow"></div>
+  <div class="svg-wrap">
+    <svg class="shield shield-glow" width="160" height="160" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#7c89ff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+        <filter id="f1" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <path d="M60 8c12 0 24 6 32 15v12c0 18-12 34-32 44C40 69 28 53 28 35V23C36 14 48 8 60 8z" fill="url(#g1)" opacity="0.12"/>
+      <path d="M60 12c10 0 20 5 26 13v10c0 15-10 28-26 36C44 63 34 50 34 35V25C40 17 50 12 60 12z" fill="white" opacity="0.08"/>
+      <path d="M60 12c10 0 20 5 26 13v10c0 15-10 28-26 36C44 63 34 50 34 35V25C40 17 50 12 60 12z" stroke="url(#g1)" stroke-width="2.6" fill="url(#g1)" filter="url(#f1)"/>
+      <path d="M60 26c6 0 11 3 14 8v6c0 8-5 15-14 21-9-6-14-13-14-21v-6c3-5 8-8 14-8z" fill="rgba(255,255,255,0.08)"/>
+      <path class="check" d="M45 56 L55 66 L78 44" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    </svg>
+  </div>
+  <h1>Safe & Secure</h1>
+  <p class="lead">All personal and financial data are safely encrypted. Payments are processed directly via UPI — fast and reliable.</p>
+  <div class="badge">Protected • Encrypted</div>
+  <div class="disclaimer"> Please confirm the amount before proceeding. Transactions go directly to the receiver UPI and cannot be reversed by this site.</div>
+  <div class="cta">
+    <button class="btn" onclick="proceedToPayment()">Proceed to Payment</button>
+    <button class="btn secondary" onclick="learn()">Learn More</button>
+  </div>
+</div>
+
+<!-- Payment Section -->
+<div id="paymentSection" class="wrap">
+  <h2>Scan & Pay</h2>
+  <div id="qrcode"></div>
+  <div class="upi-id">UPI ID: <b>8262728811718@ybl</b></div>
+  <button class="copy-btn" onclick="copyUPI()">Copy UPI ID</button>
+  <input type="number" id="amount" placeholder="Enter Amount (₹)">
+  <button id="payNowBtn" class="btn" onclick="payNow()">Pay Now</button>
+</div>
+
+<script>
+const upiId = "8262728811718@ybl";
+const qrContainer = document.getElementById("qrcode");
+
+function generateQR(amount=""){
+  qrContainer.innerHTML="";
+  let upiLink=`upi://pay?pa=${upiId}&pn=RAJMODS&am=${amount}&cu=INR`;
+  QRCode.toCanvas(document.createElement("canvas"),upiLink,{width:200},function(err,canvas){
+    if(!err) qrContainer.appendChild(canvas);
+  });
+}
+generateQR();
+
+function payNow(){
+  let amount = document.getElementById("amount").value;
+  if(!amount){ alert("Please enter amount"); return; }
+  let upiLink=`upi://pay?pa=${upiId}&pn=RAJMODS&am=${amount}&cu=INR`;
+  window.location.href = upiLink;
+}
+
+function copyUPI(){
+  navigator.clipboard.writeText(upiId);
+  alert("UPI ID Copied: "+upiId);
+}
+
+function learn(){
+  alert("Payments are routed through your UPI app. This site only generates secure UPI intent/QR. For refunds/contact support, check UPI app or receiver.");
+}
+
+function proceedToPayment(){
+  document.getElementById("welcomeSection").style.display="none";
+  document.getElementById("paymentSection").style.display="block";
+}
+
+// Update QR whenever amount changes
+document.getElementById("amount").addEventListener("input", function(){
+  generateQR(this.value);
+});
+</script>
+</body>
+</html>
